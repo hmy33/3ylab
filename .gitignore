@@ -1,0 +1,7 @@
+__pycache__
+.ipynb_checkpoints
+db
+download
+*.pkl
+data.csv
+try*.ipynb
