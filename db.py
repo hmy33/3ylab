@@ -1,0 +1,95 @@
+import sqlite3
+import pandas as pd
+import os
+import io
+import requests
+import datetime
+
+class DB():
+    def __init__(self):
+        self.conn = sqlite3.connect(os.path.join('db', "data.db"))
+        self.curs = self.conn.cursor()
+        self.stock_info = get_target_stocks()
+        self.daily_price = {}
+
+    def __del__(self):
+        self.curs.close()
+        self.conn.close()
+
+    def save(self, df, table_name):
+        df.to_sql(table_name, self.conn, if_exists='append')
+
+    def delete_by_date(self, date, table_name):
+        sql = f'DELETE FROM {table_name} WHERE date = "{str(date)}"'
+        print(sql)
+        self.curs.execute(sql)
+        self.conn.commit()
+
+    def get_stock_info(self):
+        return self.stock_info
+
+    def get_stock_name(self, stock_id):
+        return self.stock_info.loc[stock_id, 'stock_name']
+
+    def get_daily_price(self, stock_id):
+        if stock_id not in self.daily_price:
+            self.daily_price[stock_id] = crawl_price(stock_id)
+        return self.daily_price[stock_id]
+    
+    def get_daily_dates(self):
+        price = self.get_daily_price('2317')
+        return pd.DataFrame(price.index).set_index('Date')
+
+    def get_provided_dates_of_weekly_shareholder_classes(self):
+        return get_provided_dates_of_weekly_shareholder_classes()
+        
+    def query_and_index_date(self, sql):
+        df = pd.read_sql(sql, self.conn, index_col=['date'], parse_dates=['date']).sort_index()
+        if len(df) == 0:
+            raise Exception(sql)
+        return df
+
+    # def get_monthly_revenue(self, stock_id):
+        # sql = f'SELECT * FROM monthly_revenue WHERE stock_id = {stock_id}'
+        # return self.query_and_index_date(sql)
+
+    # def get_quarterly_report(self, stock_id):
+        # sql = f'SELECT * FROM quarterly_report WHERE stock_id = {stock_id}'
+        # return self.query_and_index_date(sql)
+
+    def get_by_stock_id(self, stock_id, table_name):
+        sql = f'SELECT * FROM {table_name} WHERE stock_id = {stock_id}'
+        df = self.query_and_index_date(sql)
+        return df.drop('stock_id', axis=1)
+
+    def get_dates(self, table_name):
+        sql = f'SELECT DISTINCT(date) FROM {table_name}'
+        df = pd.read_sql(sql, self.conn, parse_dates=['date']).sort_values(by='date')
+        return pd.DataFrame(df['date']).set_index('date')
+
+def crawl_price(stock_id):
+    # print('crawl price: ' + stock_id)
+    stock_id = stock_id + '.TW'
+    now = int(datetime.datetime.now().timestamp()) + 86400
+    url = "https://query1.finance.yahoo.com/v7/finance/download/" + stock_id + "?period1=0&period2=" + str(now) + "&interval=1d&events=history&crumb=hP2rOschxO0"
+
+    response = requests.post(url)
+
+    f = io.StringIO(response.text)
+    df = pd.read_csv(f, index_col='Date', parse_dates=['Date']).sort_index()
+    df = df.dropna()
+    df = df.rename(columns={col: col.lower() for col in df.columns})
+    return df
+
+def get_target_stocks():
+    df = pd.read_csv('target.csv', encoding='utf-8', dtype={'stock_id': str})
+    df = df.set_index('stock_id')
+    return df[df['stable_dividend'] & ~df['bad_PBR']]
+
+import ast
+def get_provided_dates_of_weekly_shareholder_classes():
+    url = 'https://www.tdcc.com.tw/smWeb/QryStockAjax.do'
+    payload = {'REQ_OPR': 'qrySelScaDates'}
+    res = requests.post(url, data=payload)
+    datestrs = ast.literal_eval(res.text)
+    return pd.DataFrame({'date': pd.to_datetime(datestrs)}).set_index('date').sort_index()
