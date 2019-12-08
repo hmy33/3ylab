@@ -45,7 +45,7 @@ def reduce_to_long_interval(df, num):
 
 
 def plot(dfs, overlays, overlay_titles_list, num):    
-    rows, cols, width, height = (4, 3, 6, 6)
+    rows, cols, width, height = (3, 3, 6, 6)
     fig, axes = plt.subplots(rows, cols, figsize=(width*cols, height*rows))
     
     for period_index, (df_all, overlay_titles) in enumerate(zip(dfs, overlay_titles_list)):
@@ -56,35 +56,24 @@ def plot(dfs, overlays, overlay_titles_list, num):
             graph_index += 1
             return axes[graph_index, period_index]
         
-        # x ticks
-        x = np.arange(len(df))
-        ticks = [date.strftime('%Y-%m-%d') for date in df.index]
-        space = int(len(ticks) / 4)
-        for i, t in enumerate(ticks):
-            ticks[i] = t if i % space == 0 else ''
-        
         ### plot buy_surplus
         ax = get_ax()
         # overlays
         for title in overlay_titles:
             overlay = df.join(overlays[title])[[title]]
             overlay.plot(ax=ax, title='外資買超')
-#             ax.plot(x, overlay, label=title)
-#         ax.legend()   
-#         ax.set_xticks(x)
-#         ax.set_xticklabels(ticks)
         # grid
         ax.grid(True, axis='y')
         
+        if period_index == 0:
+            continue
+
         ### plot hold_ratio diff
         ax=get_ax()
         df[['foreign_ratio_diff', 'other_major_ratio_diff']].plot(ax=ax)
         
         ### plot hold_ratio
         ax=get_ax()
-        df[['close']].plot(ax=ax)
-        df[['foreign_ratio']].plot(grid=True, color='orange', ax=ax.twinx())
+        df[['foreign_ratio']].plot(ax=ax)
+        df[['other_major_ratio']].plot(grid=True, color='orangered', ax=ax.twinx())
         
-        ax=get_ax()
-        df[['close']].plot(ax=ax)
-        df[['other_major_ratio']].plot(grid=True, color='orange', ax=ax.twinx())
