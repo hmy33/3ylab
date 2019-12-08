@@ -4,6 +4,7 @@ import os
 import io
 import requests
 import datetime
+import utility as util
 
 class DB():
     def __init__(self):
@@ -37,7 +38,7 @@ class DB():
         return self.daily_price[stock_id]
     
     def get_daily_dates(self):
-        price = self.get_daily_price('2317')
+        price = self.get_daily_price(util.DEFAULT_STOCK_ID)
         return pd.DataFrame(price.index).set_index('Date')
 
     def get_provided_dates_of_weekly_shareholder_classes(self):
@@ -48,14 +49,6 @@ class DB():
         if len(df) == 0:
             raise Exception(sql)
         return df
-
-    # def get_monthly_revenue(self, stock_id):
-        # sql = f'SELECT * FROM monthly_revenue WHERE stock_id = {stock_id}'
-        # return self.query_and_index_date(sql)
-
-    # def get_quarterly_report(self, stock_id):
-        # sql = f'SELECT * FROM quarterly_report WHERE stock_id = {stock_id}'
-        # return self.query_and_index_date(sql)
 
     def get_by_stock_id(self, stock_id, table_name):
         sql = f'SELECT * FROM {table_name} WHERE stock_id = {stock_id}'
