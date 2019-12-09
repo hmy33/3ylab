@@ -35,14 +35,14 @@ def get_stock_data_by_date(stock_info, stock_data, date):
 
 ### backtest
 ### 買入：本益比<10，眼光費<2
-def backtest(stock_info, stock_data):
+def draw_backtest(stock_info, stock_data):
     for stock_id in stock_info.index:
         stock_name = stock_info.loc[stock_id, 'stock_name'] + ',' + stock_id
         df_daily = stock_data[stock_id]
         region = []
         get = False
         for i in range(len(df_daily.index)):
-            if df_daily.iloc[i]['本益比'] < 10 and df_daily.iloc[i]['眼光費'] < 2:
+            if df_daily.iloc[i]['buy_label']:
                 if not get:
                     region.append([df_daily.index[i]])
                     get = True
