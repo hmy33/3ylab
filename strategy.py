@@ -34,7 +34,6 @@ def get_stock_data_by_date(stock_info, stock_data, date):
 
 
 ### backtest
-### 買入：本益比<10，眼光費<2
 def draw_backtest(stock_info, stock_data):
     for stock_id in stock_info.index:
         stock_name = stock_info.loc[stock_id, 'stock_name'] + ',' + stock_id
