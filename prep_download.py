@@ -171,30 +171,39 @@ def download_monthly_revenue(date):
 def move_quarterly_report(stock_id, year, quarter):
     print('move_quarterly_report', stock_id, year, quarter)
 
-    path = os.path.join('download', 'quarterly_report', stock_id, str(year) + 'q' + str(quarter) + '.html')
-    
+    # check if directory exists
+    directory = os.path.join('download', 'quarterly_report', stock_id)
+    util.check_directory(directory)
+
     # if file already downloaded, pass
-    if os.path.exists(path):
+    file_path = os.path.join(directory, str(year) + 'q' + str(quarter) + '.html')
+    if os.path.exists(file_path):
         print('**WARRN: already exists')
         return
     
     # move file
     old_path = os.path.join('download', 'temp', 'tifrs-' + str(year) + 'Q' + str(quarter), 
                             'tifrs-fr1-m1-ci-cr-' + stock_id + '-' + str(year) + 'Q' + str(quarter) + '.html')
-    os.rename(old_path, path)
+    if not os.path.exists(old_path):
+        old_path = os.path.join('download', 'temp', 'tifrs-' + str(year) + 'Q' + str(quarter), 
+                            'tifrs-fr1-m1-mim-cr-' + stock_id + '-' + str(year) + 'Q' + str(quarter) + '.html')
+    os.rename(old_path, file_path)
 
 def download_quarterly_report(stock_id, year, quarter):
     print('download_quarterly_report', stock_id, year, quarter)
 
-    path = os.path.join('download', 'quarterly_report', stock_id, str(year) + 'q' + str(quarter) + '.html')
-    
+    # check if directory exists
+    directory = os.path.join('download', 'quarterly_report', stock_id)
+    util.check_directory(directory)
+
     # if file already downloaded, pass
-    if os.path.exists(path):
+    file_path = os.path.join(directory, str(year) + 'q' + str(quarter) + '.html')
+    if os.path.exists(file_path):
         print('**WARRN: already exists')
         return
     
     # send request
-    url = ('http://mops.twse.com.tw/server-java/t164sb01?step=1&CO_ID='
+    url = ('https://mops.twse.com.tw/server-java/t164sb01?step=1&CO_ID='
             + stock_id + '&SYEAR=' + str(year) + '&SSEASON=' + str(quarter) + '&REPORT_ID=')
     response = get_quarterly_report(url, 'C', util.HTTP_HEADERS)
     if response == None:
@@ -204,7 +213,7 @@ def download_quarterly_report(stock_id, year, quarter):
     response.encoding = 'big5'
     
     # save file
-    with open(path, 'w', encoding='utf-8') as file:
+    with open(file_path, 'w', encoding='utf-8') as file:
         file.write('<meta charset="UTF-8">\n')
         file.write(response.text)
 
