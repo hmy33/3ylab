@@ -75,9 +75,10 @@ def crawl_price(stock_id):
     return df
 
 def get_target_stocks():
-    df = pd.read_csv('target.csv', encoding='utf-8', dtype={'stock_id': str})
+    df = pd.read_csv('target_ori.csv', encoding='utf-8', dtype={'stock_id': str})
     df = df.set_index('stock_id')
-    return df[df['stable_dividend'] & ~df['bad_PBR']]
+    # return df[df['stable_dividend'] & ~df['bad_PBR']]
+    return df[~df.index.isin(util.NEW_STOCK_ID)]
 
 import ast
 def get_provided_dates_of_weekly_shareholder_classes():
