@@ -43,6 +43,9 @@ class DB():
 
     def get_provided_dates_of_weekly_shareholder_classes(self):
         return get_provided_dates_of_weekly_shareholder_classes()
+
+    def get_downloaded_dates_of_weekly_shareholder_classes(self):
+        return get_downloaded_dates_of_weekly_shareholder_classes()
         
     def query_and_index_date(self, sql):
         df = pd.read_sql(sql, self.conn, index_col=['date'], parse_dates=['date']).sort_index()
@@ -87,3 +90,12 @@ def get_provided_dates_of_weekly_shareholder_classes():
     res = requests.post(url, data=payload, headers=util.HTTP_HEADERS)
     datestrs = ast.literal_eval(res.text)
     return pd.DataFrame({'date': pd.to_datetime(datestrs)}).set_index('date').sort_index()
+
+import time
+def get_downloaded_dates_of_weekly_shareholder_classes():
+    path = os.path.join('download', 'weekly_shareholder_classes', util.DEFAULT_STOCK_ID)
+    dates = []
+    for filename in os.listdir(path):
+        datestr = filename.replace('.csv', '')
+        dates.append(time.strptime(datestr, '%Y%m%d')) 
+    return pd.DataFrame({'date': dates}).set_index('date').sort_index()

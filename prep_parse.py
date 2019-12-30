@@ -17,7 +17,7 @@ def parse_daily(db, from_date):
 
 def parse_weekly(db, from_date):
     db_shareholder_classes_datetimes = db.get_dates('weekly_shareholder_classes')[from_date:].index
-    for i_datetime in db.get_provided_dates_of_weekly_shareholder_classes()[from_date:].index:
+    for i_datetime in db.get_downloaded_dates_of_weekly_shareholder_classes()[from_date:].index:
         if i_datetime not in db_shareholder_classes_datetimes:
             i_date = i_datetime.date()
             for stock_id in db.get_stock_info().index:
@@ -37,6 +37,7 @@ def parse_quarterly(db, from_date):
         if i_date not in db_quarterly_report_dates:
             for stock_id in db.get_stock_info().index:
                 parse_quarterly_report(stock_id, i_date, db)
+
 
 def parse_daily_foreign_buy_sell_surplus(date, db):
     print('parse_daily_foreign_buy_sell_surplus', date)
@@ -90,7 +91,7 @@ def parse_daily_foreign_hold_ratio(date, db):
     file_path = os.path.join('download', 'daily_foreign_hold_ratio', str(date.year), datestr + '.csv')
     if not os.path.exists(file_path):
         print('**WARRN: does not exist')
-        return None
+        return
     with open(file_path, 'r', encoding='utf-8-sig') as file:
         content = file.read()
     
@@ -128,7 +129,7 @@ def parse_weekly_shareholder_classes(stock_id, date, db):
     file_path = os.path.join('download', 'weekly_shareholder_classes', stock_id, datestr + '.csv')
     if not os.path.exists(file_path):
         print('**WARRN: not exist')
-        return None
+        return
     df = pd.read_csv(file_path, encoding='utf-8')
     
     大戶_人數, 大戶_股數 = list(df.iloc[-1][['人 數', '股 數/單位數']])
