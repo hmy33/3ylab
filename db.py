@@ -84,6 +84,6 @@ import ast
 def get_provided_dates_of_weekly_shareholder_classes():
     url = 'https://www.tdcc.com.tw/smWeb/QryStockAjax.do'
     payload = {'REQ_OPR': 'qrySelScaDates'}
-    res = requests.post(url, data=payload)
+    res = requests.post(url, data=payload, headers=util.HTTP_HEADERS)
     datestrs = ast.literal_eval(res.text)
     return pd.DataFrame({'date': pd.to_datetime(datestrs)}).set_index('date').sort_index()
