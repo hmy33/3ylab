@@ -32,8 +32,8 @@ class DB():
     def get_stock_name(self, stock_id):
         return self.stock_info.loc[stock_id, 'stock_name']
 
-    def get_daily_price(self, stock_id):
-        if stock_id not in self.daily_price:
+    def get_daily_price(self, stock_id, force=False):
+        if force or stock_id not in self.daily_price:
             self.daily_price[stock_id] = crawl_price(stock_id)
         return self.daily_price[stock_id]
     
@@ -63,6 +63,11 @@ class DB():
         df = pd.read_sql(sql, self.conn, parse_dates=['date']).sort_values(by='date')
         return pd.DataFrame(df['date']).set_index('date')
 
+    def get_accumulated_income(self, stock_id, year):
+        sql = f'SELECT sum(營收) as 營收, sum(毛利) as 毛利, sum(營利) as 營利, sum(稅前淨利) as 稅前淨利, sum(稅後淨利) as 稅後淨利, sum(EPS) as EPS FROM quarterly_report WHERE stock_id = "{stock_id}" AND date in ("{year}-05-15", "{year}-08-14", "{year}-11-14")'
+        df = pd.read_sql(sql, self.conn)
+        return df
+
 def crawl_price(stock_id):
     # print('crawl price: ' + stock_id)
     stock_id = stock_id + '.TW'
@@ -78,9 +83,8 @@ def crawl_price(stock_id):
     return df
 
 def get_target_stocks():
-    df = pd.read_csv('target_ori.csv', encoding='utf-8', dtype={'stock_id': str})
+    df = pd.read_csv('target.csv', encoding='utf-8', dtype={'stock_id': str})
     df = df.set_index('stock_id')
-    # return df[df['stable_dividend'] & ~df['bad_PBR']]
     return df[~df.index.isin(util.NEW_STOCK_ID)]
 
 import ast
@@ -97,5 +101,6 @@ def get_downloaded_dates_of_weekly_shareholder_classes():
     dates = []
     for filename in os.listdir(path):
         datestr = filename.replace('.csv', '')
-        dates.append(time.strptime(datestr, '%Y%m%d')) 
+        date = datetime.datetime.fromtimestamp(time.mktime(time.strptime(datestr, '%Y%m%d'))) 
+        dates.append(date) 
     return pd.DataFrame({'date': dates}).set_index('date').sort_index()

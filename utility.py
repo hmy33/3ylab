@@ -4,19 +4,25 @@ from dateutil.rrule import rrule, MONTHLY
 import pandas as pd
 
 DEFAULT_STOCK_ID = '2317'
-NEW_STOCK_ID = ['8464', '3711', '2633']
+NEW_STOCK_ID = ['8464', '3711', '2633', # 新公司(財報不足) 
+                '2207', # 財報營收格式 
+                '5871', '4958', '1590', # 缺月營收 
+                '2327'] # 股價不足 
 HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
 
 def check_directory(directory):
     if not os.path.isdir(directory):
         os.mkdir(directory)
 
-def fill_short_interval_by_long_interval(df_short, df_long, column):
-    df_short[column] = None
-    report_dates = df_long.index
-    for i in range(len(report_dates) - 1):
-        df_short.loc[report_dates[i]:report_dates[i+1], column] = df_long.loc[report_dates[i], column]
-    df_short.loc[report_dates[-1]:, column] = df_long.loc[report_dates[-1], column]
+def fill_short_interval_by_long_interval(df_short, df_long, columns):
+    if type(columns) is str:
+        columns = [columns]
+    for column in columns:
+        df_short[column] = None
+        report_dates = df_long.index
+        for i in range(len(report_dates) - 1):
+            df_short.loc[report_dates[i]:report_dates[i+1], column] = df_long.loc[report_dates[i], column]
+        df_short.loc[report_dates[-1]:, column] = df_long.loc[report_dates[-1], column]
 
 def get_month_by_report_date(date):
     if date.month == 1:
@@ -87,3 +93,20 @@ def get_todo_quarters(start_date):
             start_date = get_report_date_by_quarter(int(year), int(quarter)) + datetime.timedelta(days=1)
     end_date = datetime.datetime.now().date()
     return get_date_range_of_quarter(start_date, end_date)
+
+def combine_price(price, num):
+    result = []
+    for i in range(len(price) - num, 0, -num):
+        df = price.iloc[i : i + num]
+        date = df.index[-1]
+        open = df.iloc[0]['open']
+        close = df.iloc[-1]['close']
+        high = df['high'].max()
+        low = df['low'].min()
+        volume = df['volume'].sum()
+        result.append({'date': date, 'open': open, 'high': high, 'low': low, 'close': close, 'volume': volume})
+
+    df_new = pd.DataFrame(result)
+    df_new.set_index('date', inplace=True)
+    df_new.sort_index(inplace=True)
+    return df_new

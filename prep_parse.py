@@ -5,9 +5,9 @@ import re
 import pandas as pd
 import utility as util
 
-def parse_daily(db, from_date):
-    db_buy_surplus_datetimes = db.get_dates('daily_buy_sell_surplus')[from_date:].index
-    db_hold_ratio_datetimes = db.get_dates('daily_foreign_hold_ratio')[from_date:].index
+def parse_daily(db, from_date, check_exist=True):
+    db_buy_surplus_datetimes = db.get_dates('daily_buy_sell_surplus')[from_date:].index if check_exist else []
+    db_hold_ratio_datetimes = db.get_dates('daily_foreign_hold_ratio')[from_date:].index if check_exist else []
     for i_datetime in db.get_daily_dates()[from_date:].index:
         i_date = i_datetime.date()
         if i_datetime not in db_buy_surplus_datetimes:
@@ -15,23 +15,23 @@ def parse_daily(db, from_date):
         if i_datetime not in db_hold_ratio_datetimes:
             parse_daily_foreign_hold_ratio(i_date, db)
 
-def parse_weekly(db, from_date):
-    db_shareholder_classes_datetimes = db.get_dates('weekly_shareholder_classes')[from_date:].index
+def parse_weekly(db, from_date, check_exist=True):
+    db_shareholder_classes_datetimes = db.get_dates('weekly_shareholder_classes')[from_date:].index if check_exist else []
     for i_datetime in db.get_downloaded_dates_of_weekly_shareholder_classes()[from_date:].index:
         if i_datetime not in db_shareholder_classes_datetimes:
             i_date = i_datetime.date()
             for stock_id in db.get_stock_info().index:
                 parse_weekly_shareholder_classes(stock_id, i_date, db)
 
-def parse_monthly(db, from_date):
-    db_monthly_revenue_datetimes = db.get_dates('monthly_revenue')[from_date:].index
+def parse_monthly(db, from_date, check_exist=True):
+    db_monthly_revenue_datetimes = db.get_dates('monthly_revenue')[from_date:].index if check_exist else []
     for i_datetime in util.get_todo_months(from_date):
         if i_datetime not in db_monthly_revenue_datetimes:
             i_date = i_datetime.date()
             parse_monthly_revenue(i_date, db)
 
-def parse_quarterly(db, from_date):
-    db_quarterly_report_datetimes = db.get_dates('quarterly_report')[from_date:].index
+def parse_quarterly(db, from_date, check_exist=True):
+    db_quarterly_report_datetimes = db.get_dates('quarterly_report')[from_date:].index if check_exist else []
     db_quarterly_report_dates = [dt.date() for dt in db_quarterly_report_datetimes]
     for i_date in util.get_todo_quarters(from_date):
         if i_date not in db_quarterly_report_dates:
