@@ -159,17 +159,16 @@ def parse_monthly_revenue(date, db):
     if dfs[0].shape[0] > 500: # single big table (row > 500)
         df = dfs[0].copy() 
     else: # small tables => combine all
-        df = pd.concat([df for df in dfs])
+        df_list = list(filter(lambda df: df.shape[1] == 11, dfs))
+        for df in df_list:
+            df.columns = df.columns.droplevel(0)
+        df = pd.concat([df for df in df_list])
         print('get small tables...')
 
-    # select column 0~9
-    df = df[list(range(0,10))]
-    # set column index
-    df.columns = df[df[0] == '公司代號'].iloc[0]
     # delete unused rows
+    df = df[df['公司代號'] != '合計']
     df['當月營收'] = pd.to_numeric(df['當月營收'], errors='coerce')
     df = df.dropna(subset=['當月營收'])
-    df = df[df['公司代號'] != '合計']
     # add column
     df['date'] = str(date)
     # set dataframe index
@@ -194,7 +193,7 @@ def parse_quarterly_report(stock_id, date, db):
         return
     dfs = pd.read_html(file_path, encoding='utf-8')
 
-    result = {'stock_id':stock_id, 'date':str(date)}
+    result = {}
 
     # pre-processing for year >= 2019
     if year >= 2019:
@@ -227,14 +226,17 @@ def parse_quarterly_report(stock_id, date, db):
         return
 
     df = pd.DataFrame([result])
-    df = df.set_index(['stock_id', 'date'])
     df = df.apply(lambda s:pd.to_numeric(s, errors='coerce'))
     
     if quarter == 4:
         df_accumulated_income = db.get_accumulated_income(stock_id, year)
         for column in df_accumulated_income.columns:
-            df.ix[0, column] = df.ix[0, column] - df_accumulated_income.ix[0, column]
+            df.loc[0, column] = df.loc[0, column] - df_accumulated_income.loc[0, column]
     
+    df['stock_id'] = stock_id
+    df['date'] = str(date)
+    df = df.set_index(['stock_id', 'date'])
+
     db.save(df, 'quarterly_report')
 
 def getValues(df, columns, result):
@@ -263,5 +265,5 @@ def patch2019(df):
     df.columns = range(df.shape[1]) #重設column index
     df = df.dropna() #NaN欄位在re時不符合字串型態
     df[0] = df[0].map(lambda s: re.sub(r'[a-zA-Z(),\-]', '', s).strip()) #移除英文、()、,、-、空白
-    df[1] = df[1].map(lambda s: '-' + s[1:-1].replace(',', '') if s[0] == '(' else s) #處理負值格式
+    df[1] = df[1].map(lambda s: '-' + s[1:-1].replace(',', '') if type(s) is str and s[0] == '(' else s) #處理負值格式
     return df

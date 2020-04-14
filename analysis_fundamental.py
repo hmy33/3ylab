@@ -25,14 +25,10 @@ def dashboard(stock_id, db):
     df_monthly['3月營收_年增率'] = df_monthly['3月營收'] / df_monthly['3月營收'].shift(12) - 1
     # plot
     df_monthly[['當月營收', '3月營收', '12月營收']].plot(marker='o', grid=True, title=stock_name, ax=get_ax())
-#     ax = df_monthly[['3月營收_年增率']][-24:].plot(kind='bar',grid=True, title=stock_name, ax=get_ax())
-    ax = get_ax()
-    ax.bar(df_monthly.index[-24:], df_monthly['3月營收_年增率'][-24:], width=25)
+    ax = df_monthly[['3月營收_年增率']][-24:].plot(kind='bar', grid=True, ax=get_ax())
     ax.yaxis.set_major_formatter(FuncFormatter('{0:.0%}'.format))
-    ax.xaxis.set_major_locator(mdates.YearLocator())
-    ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
-    ax.legend(['3月營收_年增率'])
-    ax.grid(True)
+    ax.set_xticklabels(df_monthly.index[-24:].map(lambda x: util.get_month_by_report_date(x)[1]))
+    ax.xaxis.set_tick_params(rotation=0)
 
     xlim=[df_quarterly.index[0], df_quarterly.index[-1]]
 

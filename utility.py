@@ -4,10 +4,12 @@ from dateutil.rrule import rrule, MONTHLY
 import pandas as pd
 
 DEFAULT_STOCK_ID = '2317'
-NEW_STOCK_ID = ['8464', '3711', '2633', # 新公司(財報不足) 
+EXCEPT_STOCK_ID = ['8464', '3711', '2633', # 新公司(財報不足) 
                 '2207', # 財報營收格式 
                 '5871', '4958', '1590', # 缺月營收 
-                '2327'] # 股價不足 
+                '2327', # 股價不足
+                '3481', '2409', '6239', '2618', '2610', '2603', '2492', '2371', '2353', '2324', # 賠過錢
+                '9945', '2542', '2408', '2344'] # 獲利配息不穩定
 HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
 
 def check_directory(directory):
@@ -37,7 +39,9 @@ def get_report_date_by_month(year, month):
         return datetime.date(year, month + 1, 10)
 
 def get_date_range_of_month(start_date, end_date):
-    return pd.date_range(start_date, end_date) & rrule(MONTHLY, dtstart=datetime.date(start_date.year, start_date.month, 10), until=end_date) 
+    range1 = pd.date_range(start_date, end_date)
+    range2 = [date for date in rrule(MONTHLY, dtstart=datetime.date(start_date.year, start_date.month, 10), until=end_date)]
+    return range1 & range2
 
 def get_todo_months(start_date):
     if start_date == None:
