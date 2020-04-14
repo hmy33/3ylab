@@ -15,7 +15,12 @@ def prepare_stock_data(db):
         df_daily['本益比'] = df_daily.close / df_daily.EPS4季
         df_daily['本淨比'] = df_daily.close / df_daily['淨值/股']
         df_daily['眼光費'] = (df_daily.close - df_daily['淨值/股']) / df_daily.EPS4季
-        stock_data[stock_id] = df_daily[['close', '淨值/股', 'EPS4季', '本益比', '本淨比', '眼光費']].dropna()
+        
+        buy_surplus = db.get_by_stock_id(stock_id, 'daily_buy_sell_surplus')
+        buy_surplus.columns = ['foreign_buy_surplus']
+        df_daily = pd.merge(df_daily, buy_surplus, left_index=True, right_index=True)
+        
+        stock_data[stock_id] = df_daily[['close', '淨值/股', 'EPS4季', '本益比', '本淨比', '眼光費', 'foreign_buy_surplus']].dropna()
     return stock_data
 
 
@@ -35,7 +40,7 @@ def get_stock_data_by_date(stock_info, stock_data, date):
 
 ### backtest
 def draw_backtest(stock_info, stock_data):
-    for stock_id in stock_info.index:
+    for stock_id in stock_data:
         stock_name = stock_info.loc[stock_id, 'stock_name'] + ',' + stock_id
         df_daily = stock_data[stock_id]
         region = []
