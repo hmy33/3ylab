@@ -1,6 +1,11 @@
 import pandas as pd
 import utility as util
 
+def is_historical_low(s):
+    s_min = s.min()
+    s_max = s.max()
+    return s.apply(lambda x: x < s_min + (s_max - s_min) * 0.2)  
+
 def prepare_stock_data(db):
     stock_data = {}
     for stock_id in db.get_stock_info().index:
@@ -17,10 +22,17 @@ def prepare_stock_data(db):
         df_daily['眼光費'] = (df_daily.close - df_daily['淨值/股']) / df_daily.EPS4季
         
         buy_surplus = db.get_by_stock_id(stock_id, 'daily_buy_sell_surplus')
-        buy_surplus.columns = ['foreign_buy_surplus']
+        buy_surplus.columns = ['外資買超']
         df_daily = pd.merge(df_daily, buy_surplus, left_index=True, right_index=True)
         
-        stock_data[stock_id] = df_daily[['close', '淨值/股', 'EPS4季', '本益比', '本淨比', '眼光費', 'foreign_buy_surplus']].dropna()
+        df = df_daily[['close', '淨值/股', 'EPS4季', '本益比', '本淨比', '眼光費', '外資買超']].dropna()
+        df['股價低點'] = is_historical_low(df['close'])
+        df['本益比低點'] = is_historical_low(df['本益比'])
+        df['本淨比低點'] = is_historical_low(df['本淨比'])
+        df['眼光費低點'] = is_historical_low(df['眼光費'])
+
+        stock_data[stock_id] = df
+
     return stock_data
 
 
