@@ -68,24 +68,20 @@ class DB():
         df = pd.read_sql(sql, self.conn)
         return df
 
+import yfinance as yf
 def crawl_price(stock_id):
     # print('crawl price: ' + stock_id)
     stock_id = stock_id + '.TW'
-    now = int(datetime.datetime.now().timestamp()) + 86400
-    url = "https://query1.finance.yahoo.com/v7/finance/download/" + stock_id + "?period1=0&period2=" + str(now) + "&interval=1d&events=history&crumb=hP2rOschxO0"
-
-    response = requests.post(url)
-
-    f = io.StringIO(response.text)
-    df = pd.read_csv(f, index_col='Date', parse_dates=['Date']).sort_index()
-    df = df.dropna()
+    stock = yf.Ticker(stock_id)
+    df = stock.history(start='2000-01-01')
     df = df.rename(columns={col: col.lower() for col in df.columns})
+    time.sleep(1)
     return df
 
 def get_target_stocks():
     df = pd.read_csv('target.csv', encoding='utf-8', dtype={'stock_id': str})
     df = df.set_index('stock_id')
-    return df[~df.index.isin(util.NEW_STOCK_ID)]
+    return df[~df.index.isin(util.EXCEPT_STOCK_ID)]
 
 import ast
 def get_provided_dates_of_weekly_shareholder_classes():
