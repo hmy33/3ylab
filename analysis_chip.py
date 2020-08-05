@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 import utility as util
 
-def dashboard(stock_id, db, num_of_data):
+def dashboard(stock_id, db, num_of_data, from_date=None):
     mpl.style.use('fivethirtyeight')
     ### get stock data
     price = db.get_daily_price(stock_id)[['close']]
@@ -37,19 +37,20 @@ def dashboard(stock_id, db, num_of_data):
         df['other_major_ratio_diff'] = df.other_major_ratio - df.other_major_ratio.shift(1)
         
     ### plot
-    plot(dfs, overlays, overlay_titles, num_of_data)
+    plot(dfs, overlays, overlay_titles, num_of_data, from_date)
  
 
 def reduce_to_long_interval(df, num):
     return df[::-num][::-1]
 
 
-def plot(dfs, overlays, overlay_titles_list, num):    
+def plot(dfs, overlays, overlay_titles_list, num, from_date):    
     rows, cols, width, height = (3, 3, 6, 6)
     fig, axes = plt.subplots(rows, cols, figsize=(width*cols, height*rows))
     
     for period_index, (df_all, overlay_titles) in enumerate(zip(dfs, overlay_titles_list)):
-        df = df_all[-num:]
+        df = df_all[-num:] if from_date is None else df_all.loc[from_date:]
+
         graph_index = -1
         def get_ax():
             nonlocal graph_index
